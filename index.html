@@ -78,7 +78,7 @@ footer a{color:#e2a1b3;text-decoration:none}
 <div class="panel"><div class="heading"><div><h2>◫ Вовлечённость</h2><div class="desc">История доступных показателей по контенту</div></div><select id="engagementMetric"><option value="likes">Лайки</option><option value="views">Просмотры</option><option value="comments">Комментарии</option><option value="shares">Репосты</option></select></div><div class="plot"><canvas id="engagement"></canvas></div></div>
 </section>
 <section class="bottom">
-<div class="panel"><div class="heading"><div><h2>◉ Обзор площадок</h2><div class="desc">Последние подтверждённые замеры</div></div></div><div class="summary"><div class="stat"><div class="label">Социальные сети с данными</div><div class="statstrong" id="coverage">0 / 4</div></div><div class="stat"><div class="label">Суточный прирост подписчиков</div><div class="statstrong" id="delta">—</div></div><div class="stat"><div class="label">Число замеров</div><div class="statstrong" id="count">0</div></div><div class="stat"><div class="label">Доступно площадок</div><div class="statstrong" id="sources">0 / 5</div></div></div></div>
+<div class="panel"><div class="heading"><div><h2>◉ Обзор площадок</h2><div class="desc">Последние подтверждённые замеры</div></div></div><div class="summary"><div class="stat"><div class="label">Социальные сети с данными</div><div class="statstrong" id="coverage">0 / 4</div></div><div class="stat"><div class="label">Суточный прирост подписчиков</div><div class="statstrong" id="delta">—</div></div><div class="stat"><div class="label">Число замеров</div><div class="statstrong" id="count">0</div></div><div class="stat"><div class="label">Доступно площадок</div><div class="statstrong" id="sources">0 / 5</div></div></div><div id="external-metric" style="margin-top:14px;color:#ad9fa5;font-size:11px;line-height:1.6"></div></div>
 <div class="panel"><div class="heading"><div><h2>◷ История обновлений</h2><div class="desc">Последние записи из базы</div></div><button class="refresh" id="csv">↓ CSV</button></div><div class="scroll"><table class="log"><thead><tr><th>Дата</th><th>Площадка</th><th>Показатель</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div></div>
 </section>
 <footer><span>COLD CARTI / ANALYTICS · автоматические замеры по доступным источникам</span><span>Источник: <a href="https://music.yandex.ru/artist/6487554" target="_blank">Яндекс Музыка</a> · <a href="https://t.me/coldcarti" target="_blank">Telegram</a> · <a href="https://vk.ru/themostcold" target="_blank">VK</a> · <a href="https://www.instagram.com/realcoldcarti/" target="_blank">Instagram</a> · <a href="https://www.tiktok.com/@coldcarti" target="_blank">TikTok</a></span></footer>
@@ -92,9 +92,9 @@ const percent=(a,b)=>num(a)&&num(b)&&b!==0?(a-b)/b*100:null;
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let snapshots=[],days=30,charts={};
 function dateRange(){const d=[...new Set(snapshots.map(x=>x.date))].sort();if(!days)return d;const ref=new Date((d.at(-1)||new Date().toISOString().slice(0,10))+'T12:00:00Z');const start=new Date(ref.getTime()-(days-1)*86400000).toISOString().slice(0,10);return d.filter(x=>x>=start)}
-function rowsFor(p,k){return snapshots.filter(x=>x.platform===p&&x.status==='ok'&&num(x[k])).sort((a,b)=>a.date.localeCompare(b.date))}
+function rowsFor(p,k){return snapshots.filter(x=>x.platform===p&&x.status==='ok'&&x.quality!=='external_unverified'&&num(x[k])).sort((a,b)=>a.date.localeCompare(b.date))}
 function render(){
- const all=snapshots.filter(x=>x.status==='ok');
+ const all=snapshots.filter(x=>x.status==='ok'&&platforms.some(p=>p.id===x.platform));
  document.getElementById('updated').textContent='Последний замер: '+(snapshots.map(x=>x.date).sort().at(-1)||'—');
  document.getElementById('count').textContent=fmt(snapshots.length);
  document.getElementById('sources').textContent=new Set(all.map(x=>x.platform)).size+' / 5';
@@ -109,9 +109,11 @@ function render(){
  });
  document.getElementById('cards').innerHTML=cards.join('');
  document.getElementById('delta').textContent=compared===4?(totalDelta>0?'+':'')+fmt(totalDelta):'—';
- document.getElementById('notice').textContent=snapshots.length?'Показаны реальные сохранённые замеры. Недоступные показатели отмечены прочерком. Для обновления по расписанию нужно подключить серверный сборщик.':'Ожидание данных из metrics.json. Согласованный интерфейс готов, но автоматический сбор статистики ещё не подключён. Демонстрационные значения не используются.';
+ document.getElementById('notice').textContent=snapshots.length?'Сборщик запущен по расписанию. Показатели берутся из подтверждённых замеров конкретных площадок. Если площадка не ответила, её карточка остаётся пустой; история сохраняется.':'Ожидание первого сохранённого замера. Демонстрационные значения не используются.';
+ const lmusic=rowsFor('lmusic','listeners_monthly').at(-1)||snapshots.filter(x=>x.platform==='lmusic'&&num(x.listeners_monthly)).sort((a,b)=>a.date.localeCompare(b.date)).at(-1);
+ document.getElementById('external-metric').innerHTML=lmusic?'Дополнительный показатель: <b style="color:#eee">'+fmt(lmusic.listeners_monthly)+'</b> слушателей/мес. по данным <a href="https://lmusic.kz/artist/cold-carti" target="_blank" rel="noopener" style="color:#e5a4b9">lmusic.kz</a>. Это не подтверждённая статистика Яндекс Музыки.':'';
  const recent=[...snapshots].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12);
- document.getElementById('rows').innerHTML=recent.length?recent.map(x=>{let p=platforms.find(p=>p.id===x.platform);let k=p?.metric||'followers';return `<tr><td>${safe(x.date)}</td><td>${safe(p?.name||x.platform)}</td><td>${fmt(x[k])}</td><td>${x.status==='ok'?'Получено':'Недоступно'}</td></tr>`}).join(''):'<tr><td colspan="4" class="empty">Данных пока нет</td></tr>';
+ document.getElementById('rows').innerHTML=recent.length?recent.map(x=>{let p=platforms.find(p=>p.id===x.platform);let k=p?.metric||(x.platform==='lmusic'?'listeners_monthly':'followers');return `<tr><td>${safe(x.date)}</td><td>${safe(x.platform==='lmusic'?'lmusic.kz':(p?.name||x.platform))}</td><td>${fmt(x[k])}</td><td>${x.platform==='lmusic'?'Внешний источник':x.status==='ok'?'Получено':'Недоступно'}</td></tr>`}).join(''):'<tr><td colspan="4" class="empty">Данных пока нет</td></tr>';
  graph('growth',document.getElementById('audienceMetric').value);
  graph('engagement',document.getElementById('engagementMetric').value);
 }
@@ -134,14 +136,14 @@ async function loadStatus(){
     const response=await fetch('status.json?cache='+Date.now(),{cache:'no-store'});
     if(!response.ok)throw Error('HTTP '+response.status);
     const data=await response.json();
-    const names={telegram:'Telegram',yandex:'Яндекс Музыка',instagram:'Instagram',tiktok:'TikTok',vk:'VK'};
+    const names={telegram:'Telegram',yandex:'Яндекс Музыка',instagram:'Instagram',tiktok:'TikTok',vk:'VK',lmusic:'lmusic.kz (отдельная статистика)'};
     const labels={
       ok:'✓ Данные получены',disabled:'— Сбор отключён',unavailable:'! Нет доступа к данным'
     };
     const time=data.last_run?new Date(data.last_run).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
     slot.innerHTML='<div style="margin-bottom:8px;color:#d9b3c0">Последняя проверка: '+safe(time)+'</div>'+
       Object.entries(data.sources||{}).map(([key,v])=>{
-        const detail=v.status==='unavailable'?
+        const detail=v.status==='ok'&&key==='lmusic'?'Не подтверждено Яндекс Музыкой':v.status==='unavailable'?
           (key==='yandex'&&/451/.test(v.message||'')?'Региональное ограничение HTTP 451':
           key==='instagram'&&/429|401/.test(v.message||'')?'Instagram ограничил автоматические запросы (429/401)':
           (v.message||'Недоступно').slice(0,120)):'';
