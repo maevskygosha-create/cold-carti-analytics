@@ -67,35 +67,88 @@ def collect_tiktok():
     raise ValueError("Публичный HTML TikTok не содержит читаемых показателей")
 
 def collect_instagram():
-    page=fetch(SOURCES["instagram"])
-    # Do not treat arbitrary counters from unrelated posts as profile followers.
-    patterns=[
+    """Try publicly exposed profile metadata and Instagram's own public web endpoint.
+
+    This may be blocked in GitHub Actions and must never fake a success.
+    """
+    username = "realcoldcarti"
+    page = fetch(SOURCES["instagram"])
+    # Basic guard to avoid counting an unrelated page / login redirect.
+    if username not in html.unescape(page).lower():
+        raise ValueError("Instagram: profile identity not visible in public HTML")
+    meta = re.search(
+        r'<meta[^>]+(?:property|name)=[\"\'](?:og:description|description)[\"\'][^>]+content=[\"\']([^\"\']+)',
+        page, re.I,
+    )
+    if not meta:
+        meta = re.search(
+            r'<meta[^>]+content=[\"\']([^\"\']+)[\"\'][^>]+(?:property|name)=[\"\'](?:og:description|description)',
+            page, re.I,
+        )
+    if meta:
+        description = html.unescape(meta.group(1))
+        m = re.search(r'([\d,.]+\s*[kKmM]?)\s+Followers\b', description, re.I)
+        if m:
+            count = integer(m.group(1))
+            if count is not None:
+                result = {"followers": count, "approximate": bool(re.search(r'[kKmM]',m.group(1)))}
+                posts = re.search(r'([\d,.]+\s*[kKmM]?)\s+Posts\b',description,re.I)
+                if posts:
+                    n = integer(posts.group(1))
+                    if n is not None: result["posts"] = n
+                return result
+    # Meta sometimes embeds exact public counts in page data.
+    for pattern in [
         r'"edge_followed_by"\s*:\s*\{\s*"count"\s*:\s*(\d+)',
         r'"follower_count"\s*:\s*(\d+)',
-        r'([\d,.]+\s*[KkMm]?)\s+Followers\b',
-    ]
-    for pattern in patterns:
-        m=re.search(pattern,page,re.I)
+    ]:
+        m = re.search(pattern,page)
         if m:
-            n=integer(m.group(1))
-            if n is not None: return {"followers":n}
-    raise ValueError("Публичная статистика Instagram недоступна без авторизации")
+            n = integer(m.group(1))
+            if n is not None: return {"followers": n}
+    raise ValueError("Instagram: no readable public follower metric in HTML; login may be required")
+
 
 def collect_yandex():
-    page=fetch(SOURCES["yandex"])
-    # Only a metric explicitly labeled as monthly listeners qualifies.
-    plain=re.sub(r"<[^>]*>"," ",html.unescape(page))
-    plain=re.sub(r"\s+"," ",plain)
-    patterns=[
-        r'([\d][\d\s,.]*(?:\s*(?:тыс\.?|млн\.?|[KkMm]))?)\s+слушател(?:ей|я)\s+в\s+месяц',
-        r'([\d][\d\s,.]*(?:\s*(?:тыс\.?|млн\.?|[KkMm]))?)\s+monthly\s+listeners',
-    ]
-    for pattern in patterns:
-        m=re.search(pattern,plain,re.I)
-        if m:
-            n=integer(m.group(1))
-            if n is not None: return {"listeners_monthly":n}
-    raise ValueError("Публичная страница не отдала показатель слушателей в месяц")
+    """Read monthly listeners from the public artist brief-info API, if exposed.
+
+    This is an unofficial endpoint and may change or reject unauthenticated requests.
+    """
+    api = "https://api.music.yandex.net/artists/6487554/brief-info"
+    errors = []
+    for url in (api,):
+        try:
+            data = json.loads(fetch(url))
+            result = data.get("result") or {}
+            if not isinstance(result,dict): raise ValueError("invalid API result")
+            artist = result.get("artist") or {}
+            if isinstance(artist,dict) and artist.get("id") is not None and str(artist["id"]) != "6487554":
+                raise ValueError("unexpected artist ID")
+            stats = result.get("stats") or {}
+            if not isinstance(stats,dict): raise ValueError("no stats object")
+            n = integer(stats.get("lastMonthListeners"))
+            if n is None: n = integer(stats.get("last_month_listeners"))
+            if n is not None:
+                return {"listeners_monthly":n}
+            errors.append("brief-info: missing lastMonthListeners")
+        except Exception as exc:
+            errors.append("brief-info: " + str(exc)[:180])
+    # Conservative fallback to exact labeled public page text.
+    try:
+        page = fetch(SOURCES["yandex"])
+        plain = re.sub(r"<[^>]+>"," ",html.unescape(page))
+        plain = re.sub(r"\s+"," ",plain)
+        for pattern in (
+            r'([\d][\d\s,.]*(?:\s*(?:тыс\.?|млн\.?|[KkMm]))?)\s+слушател(?:ей|я)\s+в\s+месяц',
+            r'([\d][\d\s,.]*(?:\s*(?:тыс\.?|млн\.?|[KkMm]))?)\s+monthly\s+listeners',
+        ):
+            m = re.search(pattern,plain,re.I)
+            if m:
+                n = integer(m.group(1))
+                if n is not None: return {"listeners_monthly":n}
+    except Exception as exc:
+        errors.append("web page: " + str(exc)[:180])
+    raise ValueError("Yandex public monthly listeners unavailable: " + "; ".join(errors))
 
 COLLECTORS = {"telegram":collect_telegram,"yandex":collect_yandex,"instagram":collect_instagram,"tiktok":collect_tiktok}
 
