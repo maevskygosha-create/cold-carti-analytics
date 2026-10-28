@@ -22,6 +22,7 @@ SOURCES = {
     'tiktok': 'https://www.tiktok.com/@coldcarti',
     'instagram': f'https://www.instagram.com/{IG_USERNAME}/',
     'yandex': f'https://music.yandex.ru/artist/{ARTIST_ID}',
+    'lmusic': 'https://lmusic.kz/artist/cold-carti',
 }
 UA = ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
       'Chrome/131.0.0.0 Safari/537.36')
@@ -300,8 +301,8 @@ def yandex_embedded(page):
 
 
 
-def collect_yandex_mirror():
-    """Non-official public catalogue, clearly marked as unverified."""
+def collect_lmusic():
+    """Independent non-Yandex monthly count; keep as separate source."""
     url = 'https://lmusic.kz/artist/cold-carti'
     content = fetch(url)
     plain = re.sub(r'<[^>]+>', ' ', html.unescape(content))
@@ -320,7 +321,7 @@ def collect_yandex_mirror():
     return {
         'listeners_monthly': n,
         '_source': url,
-        '_source_note': 'Внешний каталог lmusic.kz. Метрика не подтверждена Яндекс Музыкой.',
+        '_source_note': 'Отдельная статистика lmusic.kz; не является подтверждённым числом слушателей Яндекс Музыки.',
         '_quality': 'external_unverified',
     }
 
@@ -381,10 +382,6 @@ def collect_yandex():
             errs.append('Chromium: нет числа слушателей')
     except Unavailable as e:
         errs.append('Chromium: ' + str(e))
-    try:
-        return collect_yandex_mirror()
-    except Unavailable as e:
-        errs.append('публичный каталог: ' + str(e))
     raise Unavailable('Яндекс Музыка: ' + '; '.join(errs))
 
 
@@ -393,6 +390,7 @@ COLLECTORS = {
     'yandex': collect_yandex,
     'instagram': collect_instagram,
     'tiktok': collect_tiktok,
+    'lmusic': collect_lmusic,
 }
 
 
@@ -448,7 +446,7 @@ def main():
             'sources': statuses}, ensure_ascii=False, indent=2) + '\n',
         encoding='utf-8')
     print(
-        f'Итого: {successful}/4 источников с новыми данными. История сохранена.',
+        f'Итого: {successful}/5 источников (включая отдельный lmusic), история сохранена.',
         flush=True)
 
 
