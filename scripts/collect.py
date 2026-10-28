@@ -305,14 +305,14 @@ def collect_yandex_mirror():
     url = 'https://lmusic.kz/artist/cold-carti'
     content = fetch(url)
     plain = re.sub(r'<[^>]+>', ' ', html.unescape(content))
-    plain = re.sub(r'\\s+', ' ', plain)
+    plain = re.sub(r'\s+', ' ', plain)
     # Match the exact artist and two known releases, not an unrelated namesake.
-    if not re.search(r'Cold\\s+Carti', plain, re.I):
+    if not re.search(r'Cold\s+Carti', plain, re.I):
         raise Unavailable('зеркало: имя артиста не найдено')
     if not ('я не могу уснуть' in plain.lower() and 'падаем' in plain.lower()):
         raise Unavailable('зеркало: релизы не совпали')
     match = re.search(
-        r'([\\d\\s\\u00a0\\u202f.,]+)\\s+слушател(?:ь|ей|я)\\s+за\\s+месяц',
+        r'([\d\s\u00a0\u202f.,]+)\s+слушател(?:ь|ей|я)\s+за\s+месяц',
         plain, re.I)
     n = number(match.group(1).strip()) if match else None
     if not n or n <= 0:
@@ -330,12 +330,12 @@ def collect_instagram_mirror():
     url = 'https://imginn.com/realcoldcarti/'
     page = html.unescape(fetch(url))
     plain = re.sub(r'<[^>]+>', ' ', page)
-    plain = re.sub(r'\\s+', ' ', plain)
-    match_user = re.search(r'@realcoldcarti\\b', plain, re.I)
+    plain = re.sub(r'\s+', ' ', plain)
+    match_user = re.search(r'@realcoldcarti\b', plain, re.I)
     if not match_user:
         raise Unavailable('публичный просмотрщик: профиль не найден')
     segment = plain[match_user.start(): match_user.start() + 650]
-    match = re.search(r'([\\d,.]+\\s*[KkMm]?)\\s+followers\\b', segment, re.I)
+    match = re.search(r'([\d,.]+\s*[KkMm]?)\s+followers\b', segment, re.I)
     n = number(match.group(1).strip()) if match else None
     if not n or n <= 0:
         raise Unavailable('публичный просмотрщик: подписчики не отображаются')
