@@ -126,7 +126,7 @@ async function load(){try{const r=await fetch('metrics.json?cache='+Date.now(),{
 document.querySelectorAll('[data-days]').forEach(btn=>btn.addEventListener('click',()=>{days=Number(btn.dataset.days);document.querySelectorAll('[data-days]').forEach(b=>b.classList.toggle('active',b===btn));render()}));
 document.getElementById('audienceMetric').addEventListener('change',render);
 document.getElementById('engagementMetric').addEventListener('change',render);
-document.getElementById('refresh').addEventListener('click',load);
+document.getElementById('refresh').addEventListener('click',()=>{const url=new URL(window.location.href);url.searchParams.set('refresh',String(Date.now()));window.location.replace(url.toString())});
 document.getElementById('csv').addEventListener('click',()=>{const keys=['date','platform','followers','listeners_monthly','likes','views','comments','shares','posts','status','source'];const csv='\ufeff'+[keys.join(';'),...snapshots.map(x=>keys.map(k=>String(x[k]??'').replaceAll(';',',')).join(';'))].join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='cold-carti-data.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
 async function loadStatus(){
   const slot=document.getElementById('source-status');
@@ -150,8 +150,7 @@ async function loadStatus(){
       }).join('');
   }catch(e){slot.textContent='Статус источников пока недоступен'}
 }
-const oldRefresh=document.getElementById('refresh').onclick;
-document.getElementById('refresh').addEventListener('click',loadStatus);
+
 load();loadStatus();setInterval(()=>{load();loadStatus()},30*60*1000);
 </script>
 </body>
