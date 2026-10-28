@@ -407,7 +407,7 @@ def collect_yandex():
         dom_text = browser.get('text', '')
         ocr_text = browser.get('ocr_text', '')
         # A number is accepted only if the artist identity is present on the page.
-        has_artist = bool(re.search(r'Cold\\s+Carti', dom_text + ' ' + ocr_text, re.I))
+        has_artist = bool(re.search(r'Cold\s+Carti', dom_text + ' ' + ocr_text, re.I))
         data = (yandex_embedded(browser.get('html', '')) or
                 find_monthly_in_text(dom_text) or
                 (find_monthly_in_text(ocr_text) if has_artist else None))
