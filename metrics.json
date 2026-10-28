@@ -24,11 +24,11 @@
     },
     {
       "date": "2026-10-28",
-      "platform": "yandex",
+      "platform": "lmusic",
       "listeners_monthly": 17371,
       "status": "ok",
       "source": "https://lmusic.kz/artist/cold-carti",
-      "source_note": "Внешний каталог lmusic.kz. Метрика не подтверждена Яндекс Музыкой.",
+      "source_note": "Месячные слушатели по данным lmusic.kz; это НЕ подтверждённая метрика Яндекс Музыки.",
       "quality": "external_unverified",
       "collected_at": "2026-10-28T15:36:43.250950+00:00"
     }
