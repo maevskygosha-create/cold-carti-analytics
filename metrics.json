@@ -2,16 +2,6 @@
   "snapshots": [
     {
       "date": "2026-10-28",
-      "platform": "lmusic",
-      "listeners_monthly": 17371,
-      "status": "ok",
-      "source": "https://lmusic.kz/artist/cold-carti",
-      "source_note": "Отдельная статистика lmusic.kz; не является подтверждённым числом слушателей Яндекс Музыки.",
-      "quality": "external_unverified",
-      "collected_at": "2026-10-28T15:43:12.247067+00:00"
-    },
-    {
-      "date": "2026-10-28",
       "platform": "telegram",
       "followers": 20556,
       "status": "ok",
