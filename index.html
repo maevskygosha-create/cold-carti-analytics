@@ -27,12 +27,12 @@ main{max-width:1690px;margin:auto;padding:18px 34px 60px}
 .bar-right{display:flex;align-items:center;gap:12px}
 .sync{color:#a7a0a3;font-size:12px}
 .refresh{background:#181617;border:1px solid #3a3034;color:#e8d5da;border-radius:9px;padding:9px 15px;cursor:pointer}
-.grid-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.grid-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .card,.panel{background:linear-gradient(145deg,#151415,#0e0e0f);border:1px solid var(--stroke);border-radius:12px;padding:19px;min-width:0}
 .card{min-height:177px}
 .cardhead{display:flex;align-items:center;gap:11px;margin-bottom:19px}
 .icon{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:900;flex:none}
-.icon.yandex{background:#fff;color:#f04443}.icon.telegram{background:#189bda;color:white}.icon.vk{background:#1378fa;color:white}.icon.instagram{background:linear-gradient(35deg,#fec557,#e93683,#774ade);color:#fff}.icon.tiktok{background:#050505;color:#fff;text-shadow:2px 1px #f44,-2px -1px #4ee}
+.icon.yandex{background:#fff;color:#f04443}.icon.telegram{background:#189bda;color:white}.icon.tiktok{background:#050505;color:#fff;text-shadow:2px 1px #f44,-2px -1px #4ee}
 .name{font-weight:800;font-size:13px}.label{color:var(--muted);font-size:11px;margin-top:4px}
 .value{font-weight:900;font-size:37px;letter-spacing:-1.1px;line-height:1.05}
 .change{font-size:12px;color:#d3a5b1;margin-top:12px}.change.positive{color:#55d599}.change.negative{color:#ff878e}
@@ -78,14 +78,14 @@ footer a{color:#e2a1b3;text-decoration:none}
 <div class="panel"><div class="heading"><div><h2>◫ Вовлечённость</h2><div class="desc">История доступных показателей по контенту</div></div><select id="engagementMetric"><option value="likes">Лайки</option><option value="views">Просмотры</option><option value="comments">Комментарии</option><option value="shares">Репосты</option></select></div><div class="plot"><canvas id="engagement"></canvas></div></div>
 </section>
 <section class="bottom">
-<div class="panel"><div class="heading"><div><h2>◉ Обзор площадок</h2><div class="desc">Последние подтверждённые замеры</div></div></div><div class="summary"><div class="stat"><div class="label">Социальные сети с данными</div><div class="statstrong" id="coverage">0 / 4</div></div><div class="stat"><div class="label">Суточный прирост подписчиков</div><div class="statstrong" id="delta">—</div></div><div class="stat"><div class="label">Число замеров</div><div class="statstrong" id="count">0</div></div><div class="stat"><div class="label">Доступно площадок</div><div class="statstrong" id="sources">0 / 5</div></div></div></div>
+<div class="panel"><div class="heading"><div><h2>◉ Обзор площадок</h2><div class="desc">Последние подтверждённые замеры</div></div></div><div class="summary"><div class="stat"><div class="label">Социальные сети с данными</div><div class="statstrong" id="coverage">0 / 2</div></div><div class="stat"><div class="label">Суточный прирост подписчиков</div><div class="statstrong" id="delta">—</div></div><div class="stat"><div class="label">Число замеров</div><div class="statstrong" id="count">0</div></div><div class="stat"><div class="label">Доступно площадок</div><div class="statstrong" id="sources">0 / 3</div></div></div></div>
 <div class="panel"><div class="heading"><div><h2>◷ История обновлений</h2><div class="desc">Последние записи из базы</div></div><button class="refresh" id="csv">↓ CSV</button></div><div class="scroll"><table class="log"><thead><tr><th>Дата</th><th>Площадка</th><th>Показатель</th><th>Статус</th></tr></thead><tbody id="rows"></tbody></table></div></div>
 </section>
-<footer><span>COLD CARTI / ANALYTICS · автоматические замеры по доступным источникам</span><span>Источник: <a href="https://music.yandex.ru/artist/6487554" target="_blank">Яндекс Музыка</a> · <a href="https://t.me/coldcarti" target="_blank">Telegram</a> · <a href="https://vk.ru/themostcold" target="_blank">VK</a> · <a href="https://www.instagram.com/realcoldcarti/" target="_blank">Instagram</a> · <a href="https://www.tiktok.com/@coldcarti" target="_blank">TikTok</a></span></footer>
+<footer><span>COLD CARTI / ANALYTICS · автоматические замеры по доступным источникам</span><span>Источник: <a href="https://music.yandex.ru/artist/6487554" target="_blank">Яндекс Музыка</a> · <a href="https://t.me/coldcarti" target="_blank">Telegram</a> · <a href="https://www.tiktok.com/@coldcarti" target="_blank">TikTok</a></span></footer>
 </main>
 <script>
-const platforms=[{id:'yandex',name:'Яндекс Музыка',metric:'listeners_monthly',label:'Слушатели за месяц',icon:'♪'},{id:'telegram',name:'Telegram',metric:'followers',label:'Подписчики',icon:'➤'},{id:'vk',name:'ВКонтакте',metric:'followers',label:'Подписчики',icon:'VK'},{id:'instagram',name:'Instagram',metric:'followers',label:'Подписчики',icon:'◎'},{id:'tiktok',name:'TikTok',metric:'followers',label:'Подписчики',icon:'♪'}];
-const colors={yandex:'#ffd26b',telegram:'#38b8ea',vk:'#598efe',instagram:'#ed7fa7',tiktok:'#f6a2b9'};
+const platforms=[{id:'yandex',name:'Яндекс Музыка',metric:'listeners_monthly',label:'Слушатели за месяц',icon:'♪'},{id:'telegram',name:'Telegram',metric:'followers',label:'Подписчики',icon:'➤'},{id:'tiktok',name:'TikTok',metric:'followers',label:'Подписчики',icon:'♪'}];
+const colors={yandex:'#ffd26b',telegram:'#38b8ea',tiktok:'#f6a2b9'};
 const num=v=>typeof v==='number'&&Number.isFinite(v);
 const fmt=v=>num(v)?new Intl.NumberFormat('ru-RU').format(v):'—';
 const percent=(a,b)=>num(a)&&num(b)&&b!==0?(a-b)/b*100:null;
@@ -97,8 +97,8 @@ function render(){
  const all=snapshots.filter(x=>x.status==='ok'&&platforms.some(p=>p.id===x.platform));
  document.getElementById('updated').textContent='Последний замер: '+(snapshots.map(x=>x.date).sort().at(-1)||'—');
  document.getElementById('count').textContent=fmt(snapshots.length);
- document.getElementById('sources').textContent=new Set(all.map(x=>x.platform)).size+' / 5';
- document.getElementById('coverage').textContent=platforms.slice(1).filter(p=>rowsFor(p.id,'followers').length).length+' / 4';
+ document.getElementById('sources').textContent=new Set(all.map(x=>x.platform)).size+' / '+platforms.length;
+ document.getElementById('coverage').textContent=platforms.filter(p=>p.metric==='followers'&&rowsFor(p.id,'followers').length).length+' / '+platforms.filter(p=>p.metric==='followers').length;
  let totalDelta=0,compared=0;
  const cards=platforms.map(p=>{
    const rows=rowsFor(p.id,p.metric),now=rows.at(-1),before=rows.at(-2),change=now&&before?percent(now[p.metric],before[p.metric]):null;
@@ -108,10 +108,10 @@ function render(){
    return `<article class="card"><div class="cardhead"><div class="icon ${p.id}">${p.icon}</div><div><div class="name">${p.name}</div><div class="label">${p.label}</div></div></div><div class="value">${fmt(now?.[p.metric])}</div><div class="change ${cls}">${changeText}</div><div class="fresh">${now?'Замер: '+safe(now.date):'Ожидание источника'}</div></article>`;
  });
  document.getElementById('cards').innerHTML=cards.join('');
- document.getElementById('delta').textContent=compared===4?(totalDelta>0?'+':'')+fmt(totalDelta):'—';
+ document.getElementById('delta').textContent=compared===platforms.filter(p=>p.metric==='followers').length?(totalDelta>0?'+':'')+fmt(totalDelta):'—';
  document.getElementById('notice').textContent=snapshots.length?'Сборщик запущен по расписанию. Показатели берутся из подтверждённых замеров конкретных площадок. Если площадка не ответила, её карточка остаётся пустой; история сохраняется.':'Ожидание первого сохранённого замера. Демонстрационные значения не используются.';
   const recent=[...snapshots].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12);
- document.getElementById('rows').innerHTML=recent.length?recent.map(x=>{let p=platforms.find(p=>p.id===x.platform);let k=p?.metric||(x.platform==='lmusic'?'listeners_monthly':'followers');return `<tr><td>${safe(x.date)}</td><td>${safe(x.platform==='lmusic'?'lmusic.kz':(p?.name||x.platform))}</td><td>${fmt(x[k])}</td><td>${x.platform==='lmusic'?'Внешний источник':x.status==='ok'?'Получено':'Недоступно'}</td></tr>`}).join(''):'<tr><td colspan="4" class="empty">Данных пока нет</td></tr>';
+ document.getElementById('rows').innerHTML=recent.length?recent.map(x=>{let p=platforms.find(p=>p.id===x.platform);let k=p?.metric||'followers';return `<tr><td>${safe(x.date)}</td><td>${safe(p?.name||x.platform)}</td><td>${fmt(x[k])}</td><td>${x.status==='ok'?'Получено':'Недоступно'}</td></tr>`}).join(''):'<tr><td colspan="4" class="empty">Данных пока нет</td></tr>';
  graph('growth',document.getElementById('audienceMetric').value);
  graph('engagement',document.getElementById('engagementMetric').value);
 }
@@ -134,16 +134,15 @@ async function loadStatus(){
     const response=await fetch('status.json?cache='+Date.now(),{cache:'no-store'});
     if(!response.ok)throw Error('HTTP '+response.status);
     const data=await response.json();
-    const names={telegram:'Telegram',yandex:'Яндекс Музыка',instagram:'Instagram',tiktok:'TikTok',vk:'VK'};
+    const names={telegram:'Telegram',yandex:'Яндекс Музыка',tiktok:'TikTok'};
     const labels={
       ok:'✓ Данные получены',disabled:'— Сбор отключён',unavailable:'! Нет доступа к данным'
     };
     const time=data.last_run?new Date(data.last_run).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
     slot.innerHTML='<div style="margin-bottom:8px;color:#d9b3c0">Последняя проверка: '+safe(time)+'</div>'+
-      Object.entries(data.sources||{}).map(([key,v])=>{
+      Object.entries(data.sources||{}).filter(([key])=>platforms.some(p=>p.id===key)).map(([key,v])=>{
         const detail=v.status==='unavailable'?
           (key==='yandex'&&/451/.test(v.message||'')?'Региональное ограничение HTTP 451':
-          key==='instagram'&&/429|401/.test(v.message||'')?'Instagram ограничил автоматические запросы (429/401)':
           (v.message||'Недоступно').slice(0,120)):'';
         const status=labels[v.status]||v.status||'—';
         const color=v.status==='ok'?'#75cfa0':v.status==='disabled'?'#a5a0a3':'#ec9aaf';
