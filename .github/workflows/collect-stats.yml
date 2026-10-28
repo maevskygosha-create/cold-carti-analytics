@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '15 5 * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/collect.py'
+      - '.github/workflows/collect-stats.yml'
 
 permissions:
   contents: write
