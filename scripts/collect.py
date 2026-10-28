@@ -240,6 +240,10 @@ def collect_instagram():
             ', публичная метрика отсутствует')
     except Unavailable as e:
         errors.append(str(e))
+    try:
+        return collect_instagram_mirror()
+    except Unavailable as e:
+        errors.append(str(e))
     raise Unavailable(
         'Instagram недоступен без входа: ' + '; '.join(errors)[-400:])
 
@@ -295,6 +299,54 @@ def yandex_embedded(page):
     return find_monthly_in_text(re.sub(r'<[^>]*>', ' ', decoded))
 
 
+
+def collect_yandex_mirror():
+    """Non-official public catalogue, clearly marked as unverified."""
+    url = 'https://lmusic.kz/artist/cold-carti'
+    content = fetch(url)
+    plain = re.sub(r'<[^>]+>', ' ', html.unescape(content))
+    plain = re.sub(r'\\s+', ' ', plain)
+    # Match the exact artist and two known releases, not an unrelated namesake.
+    if not re.search(r'Cold\\s+Carti', plain, re.I):
+        raise Unavailable('зеркало: имя артиста не найдено')
+    if not ('я не могу уснуть' in plain.lower() and 'падаем' in plain.lower()):
+        raise Unavailable('зеркало: релизы не совпали')
+    match = re.search(
+        r'([\\d\\s\\u00a0\\u202f.,]+)\\s+слушател(?:ь|ей|я)\\s+за\\s+месяц',
+        plain, re.I)
+    n = number(match.group(1).strip()) if match else None
+    if not n or n <= 0:
+        raise Unavailable('зеркало: нет числа месячных слушателей')
+    return {
+        'listeners_monthly': n,
+        '_source': url,
+        '_source_note': 'Внешний каталог lmusic.kz. Метрика не подтверждена Яндекс Музыкой.',
+        '_quality': 'external_unverified',
+    }
+
+
+def collect_instagram_mirror():
+    """Public third-party profile page, no account connection."""
+    url = 'https://imginn.com/realcoldcarti/'
+    page = html.unescape(fetch(url))
+    plain = re.sub(r'<[^>]+>', ' ', page)
+    plain = re.sub(r'\\s+', ' ', plain)
+    match_user = re.search(r'@realcoldcarti\\b', plain, re.I)
+    if not match_user:
+        raise Unavailable('публичный просмотрщик: профиль не найден')
+    segment = plain[match_user.start(): match_user.start() + 650]
+    match = re.search(r'([\\d,.]+\\s*[KkMm]?)\\s+followers\\b', segment, re.I)
+    n = number(match.group(1).strip()) if match else None
+    if not n or n <= 0:
+        raise Unavailable('публичный просмотрщик: подписчики не отображаются')
+    return {
+        'followers': n,
+        '_source': url,
+        '_source_note': 'Внешняя публичная страница, не данные Instagram API.',
+        '_quality': 'external_unverified',
+    }
+
+
 def collect_yandex():
     errs = []
     api = 'https://api.music.yandex.net/artists/' + ARTIST_ID + '/brief-info'
@@ -329,6 +381,10 @@ def collect_yandex():
             errs.append('Chromium: нет числа слушателей')
     except Unavailable as e:
         errs.append('Chromium: ' + str(e))
+    try:
+        return collect_yandex_mirror()
+    except Unavailable as e:
+        errs.append('публичный каталог: ' + str(e))
     raise Unavailable('Яндекс Музыка: ' + '; '.join(errs))
 
 
@@ -359,10 +415,14 @@ def main():
             snapshots[:] = [
                 r for r in snapshots
                 if not (r.get('date') == today and r.get('platform') == platform)]
+            origin = measurements.pop('_source', SOURCES[platform])
+            note = measurements.pop('_source_note', '')
+            quality = measurements.pop('_quality', 'public_platform')
             snapshots.append({
                 'date': today, 'platform': platform,
                 **measurements, 'status': 'ok',
-                'source': SOURCES[platform],
+                'source': origin, 'source_note': note,
+                'quality': quality,
                 'collected_at': now.isoformat()})
             statuses[platform] = {
                 'status': 'ok', 'checked_at': now.isoformat(),
