@@ -44,17 +44,17 @@ jobs:
       - name: Collect Telegram, Instagram and TikTok without VPN
         run: python scripts/collect.py --only telegram,instagram,tiktok
 
-      - name: Connect BlancVPN WireGuard for Yandex
+      - name: Connect BlancVPN Kazakhstan WireGuard for Yandex
         id: blancvpn
         env:
-          BLANCVPN_WG_CONFIG: ${{ secrets.BLANCVPN_WG_CONFIG }}
+          BLANCVPN_WG_CONFIG: ${{ secrets.BLANCVPN_KZ_WG_CONFIG }}
         run: |
           if [ -z "$BLANCVPN_WG_CONFIG" ]; then
-            echo "No BlancVPN configuration: add BLANCVPN_WG_CONFIG in GitHub Actions secrets"
+            echo "No Kazakhstan configuration: add BLANCVPN_KZ_WG_CONFIG in GitHub Actions secrets"
             echo "active=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "BlancVPN config detected; connecting WireGuard (secret hidden)"
+          echo "Kazakhstan config detected; connecting WireGuard (secret hidden)"
           sudo apt-get install -y -qq wireguard-tools
           sudo install -m 600 /dev/null /etc/wireguard/coldcarti.conf
           printf '%s\n' "$BLANCVPN_WG_CONFIG" | sudo tee /etc/wireguard/coldcarti.conf >/dev/null
@@ -66,9 +66,9 @@ jobs:
           fi
           echo "Testing IPv4 connectivity through WireGuard"
           EXIT_COUNTRY="$(curl -4 -fsS --connect-timeout 5 --max-time 12 https://ipinfo.io/country 2>/dev/null | tr -d '[:space:]' || true)"
-          if [ "$EXIT_COUNTRY" != "RU" ] && [ "$EXIT_COUNTRY" != "KZ" ]; then
+          if [ "$EXIT_COUNTRY" != "KZ" ]; then
             ALT_COUNTRY="$(curl -4 -fsS --connect-timeout 5 --max-time 12 https://ifconfig.co/country-iso 2>/dev/null | tr -d '[:space:]' || true)"
-            if [ "$ALT_COUNTRY" = "RU" ] || [ "$ALT_COUNTRY" = "KZ" ]; then
+            if [ "$ALT_COUNTRY" = "KZ" ]; then
               EXIT_COUNTRY="$ALT_COUNTRY"
             fi
           fi
@@ -77,27 +77,22 @@ jobs:
           echo "WireGuard handshake: $([ "${LAST_HANDSHAKE:-0}" -gt 0 ] && echo connected || echo missing)"
           echo "WireGuard traffic: ${RX_TX:-unknown}"
           echo "VPN egress country: ${EXIT_COUNTRY:-unknown}"
-          if [ "$EXIT_COUNTRY" = "RU" ] || [ "$EXIT_COUNTRY" = "KZ" ]; then
-            echo "Regional exit confirmed"
+          if [ "$EXIT_COUNTRY" = "KZ" ]; then
+            echo "Kazakhstan exit confirmed"
             echo "active=true" >> "$GITHUB_OUTPUT"
           elif [ "${LAST_HANDSHAKE:-0}" -gt 0 ]; then
-            echo "Tunnel handshook but geo lookup failed; testing Yandex directly through tunnel"
-            echo "active=true" >> "$GITHUB_OUTPUT"
+            echo "Tunnel handshook but Kazakhstan geo lookup failed; cannot confirm KZ exit"
+            sudo wg-quick down coldcarti || true
+            echo "active=false" >> "$GITHUB_OUTPUT"
           else
             echo "No WireGuard handshake: disconnecting nonfunctional tunnel"
             sudo wg-quick down coldcarti || true
             echo "active=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Collect Yandex Music from regional VPN
-        if: always()
-        env:
-          YANDEX_PROXY_URL: ${{ secrets.YANDEX_PROXY_URL }}
-        run: |
-          if [ "${{ steps.blancvpn.outputs.active }}" != "true" ] && [ -z "$YANDEX_PROXY_URL" ]; then
-            echo "Regional VPN not connected; Yandex may return HTTP 451"
-          fi
-          python scripts/collect.py --only yandex
+      - name: Collect Yandex Music from Kazakhstan
+        if: steps.blancvpn.outputs.active == 'true'
+        run: python scripts/collect.py --only yandex
 
       - name: Disconnect BlancVPN before saving data
         if: always()
