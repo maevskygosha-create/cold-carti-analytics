@@ -71,6 +71,7 @@ footer a{color:#e2a1b3;text-decoration:none}
 <div class="bar-right"><span class="sync" id="updated">Последний замер: —</span><button class="refresh" id="refresh">↻ Обновить</button></div>
 </div>
 <section class="grid-cards" id="cards"></section>
+<div id="source-status" style="margin-bottom:12px;color:#aaa;font-size:12px">Диагностика источников: ожидается первый запуск</div>
 <div id="notice" class="notice">Статистика появится здесь после подключения ежедневного сбора данных. Неизвестные показатели не заменяются демонстрационными числами.</div>
 <section class="charts">
 <div class="panel"><div class="heading"><div><h2>↗ Рост аудитории</h2><div class="desc">Изменение подписчиков и слушателей по площадкам</div></div><select id="audienceMetric"><option value="followers">Подписчики</option><option value="listeners_monthly">Слушатели / мес.</option></select></div><div class="plot"><canvas id="growth"></canvas></div></div>
@@ -127,7 +128,10 @@ document.getElementById('audienceMetric').addEventListener('change',render);
 document.getElementById('engagementMetric').addEventListener('change',render);
 document.getElementById('refresh').addEventListener('click',load);
 document.getElementById('csv').addEventListener('click',()=>{const keys=['date','platform','followers','listeners_monthly','likes','views','comments','shares','posts','status','source'];const csv='\ufeff'+[keys.join(';'),...snapshots.map(x=>keys.map(k=>String(x[k]??'').replaceAll(';',',')).join(';'))].join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='cold-carti-data.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
-load();setInterval(load,30*60*1000);
+async function loadStatus(){try{const r=await fetch('status.json?cache='+Date.now(),{cache:'no-store'});if(!r.ok)return;const data=await r.json();document.getElementById('source-status').textContent='Источники: '+Object.entries(data.sources||{}).map(([name,v])=>name+' — '+(v.status==='ok'?'✓':v.status==='disabled'?'отключён':'недоступен')).join(' · ');}catch(e){}}
+const oldRefresh=document.getElementById('refresh').onclick;
+document.getElementById('refresh').addEventListener('click',loadStatus);
+load();loadStatus();setInterval(()=>{load();loadStatus()},30*60*1000);
 </script>
 </body>
 </html>
