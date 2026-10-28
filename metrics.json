@@ -2,35 +2,35 @@
   "snapshots": [
     {
       "date": "2026-10-28",
+      "platform": "lmusic",
+      "listeners_monthly": 17371,
+      "status": "ok",
+      "source": "https://lmusic.kz/artist/cold-carti",
+      "source_note": "Отдельная статистика lmusic.kz; не является подтверждённым числом слушателей Яндекс Музыки.",
+      "quality": "external_unverified",
+      "collected_at": "2026-10-28T15:41:31.072362+00:00"
+    },
+    {
+      "date": "2026-10-28",
       "platform": "telegram",
       "followers": 20556,
       "status": "ok",
       "source": "https://t.me/coldcarti",
       "source_note": "",
       "quality": "public_platform",
-      "collected_at": "2026-10-28T15:36:43.250950+00:00"
+      "collected_at": "2026-10-28T15:41:31.072362+00:00"
     },
     {
       "date": "2026-10-28",
       "platform": "tiktok",
       "followers": 34800,
-      "likes": 404800,
+      "likes": 404700,
       "posts": 6,
       "status": "ok",
       "source": "https://www.tiktok.com/@coldcarti",
       "source_note": "",
       "quality": "public_platform",
-      "collected_at": "2026-10-28T15:36:43.250950+00:00"
-    },
-    {
-      "date": "2026-10-28",
-      "platform": "lmusic",
-      "listeners_monthly": 17371,
-      "status": "ok",
-      "source": "https://lmusic.kz/artist/cold-carti",
-      "source_note": "Месячные слушатели по данным lmusic.kz; это НЕ подтверждённая метрика Яндекс Музыки.",
-      "quality": "external_unverified",
-      "collected_at": "2026-10-28T15:36:43.250950+00:00"
+      "collected_at": "2026-10-28T15:41:31.072362+00:00"
     }
   ]
 }
