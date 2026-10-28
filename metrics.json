@@ -8,7 +8,7 @@
       "source": "https://t.me/coldcarti",
       "source_note": "",
       "quality": "public_platform",
-      "collected_at": "2026-10-28T16:11:04.885835+00:00"
+      "collected_at": "2026-10-28T17:02:55.000990+00:00"
     },
     {
       "date": "2026-10-28",
@@ -20,7 +20,17 @@
       "source": "https://www.tiktok.com/@coldcarti",
       "source_note": "",
       "quality": "public_platform",
-      "collected_at": "2026-10-28T16:11:04.885835+00:00"
+      "collected_at": "2026-10-28T17:02:55.000990+00:00"
+    },
+    {
+      "date": "2026-10-28",
+      "platform": "yandex",
+      "listeners_monthly": 913446,
+      "status": "ok",
+      "source": "https://music.yandex.ru/artist/6487554",
+      "source_note": "",
+      "quality": "public_platform",
+      "collected_at": "2026-10-28T17:03:00.291068+00:00"
     }
   ]
 }
