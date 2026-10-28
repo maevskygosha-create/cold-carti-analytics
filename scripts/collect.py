@@ -7,9 +7,13 @@ and browser rendering. Each collector fails independently, history is preserved.
 """
 import html
 import json
+import os
 import re
+import shutil
+import subprocess
 import urllib.error
 import urllib.request
+from urllib.parse import urlsplit, unquote
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,11 +26,32 @@ SOURCES = {
     'tiktok': 'https://www.tiktok.com/@coldcarti',
     'instagram': f'https://www.instagram.com/{IG_USERNAME}/',
     'yandex': f'https://music.yandex.ru/artist/{ARTIST_ID}',
-    'lmusic': 'https://lmusic.kz/artist/cold-carti',
 }
 UA = ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '
       'Chrome/131.0.0.0 Safari/537.36')
 IG_HEADERS = {'X-IG-App-ID': '936619743392459', 'Referer': SOURCES['instagram']}
+
+# Optional, region-appropriate HTTPS proxy for Yandex ONLY.
+# Add YANDEX_PROXY_URL in GitHub Actions secrets. Do not paste it into Python.
+YANDEX_PROXY = os.environ.get('YANDEX_PROXY_URL', '').strip()
+DIAGNOSTICS = 'diagnostics/yandex-latest.png'
+
+
+def yandex_proxy_config():
+    if not YANDEX_PROXY:
+        return None
+    parsed = urlsplit(YANDEX_PROXY)
+    if parsed.scheme not in ('http', 'https') or not parsed.hostname:
+        raise Unavailable('YANDEX_PROXY_URL: нужен HTTPS-совместимый HTTP(S) прокси')
+    hostname = parsed.hostname
+    server = f'{parsed.scheme}://{hostname}:{parsed.port}' if parsed.port else f'{parsed.scheme}://{hostname}'
+    result = {'server': server}
+    if parsed.username:
+        result['username'] = unquote(parsed.username)
+    if parsed.password:
+        result['password'] = unquote(parsed.password)
+    return result
+
 
 
 class Unavailable(Exception):
@@ -42,7 +67,17 @@ def fetch(url, headers=None):
     request_headers.update(headers or {})
     req = urllib.request.Request(url, headers=request_headers)
     try:
-        with urllib.request.urlopen(req, timeout=22) as resp:
+        if ('music.yandex.' in url or 'api.music.yandex.' in url) and YANDEX_PROXY:
+            yandex_proxy_config()  # validate, but never disclose credentials
+            opener = urllib.request.build_opener(
+                urllib.request.ProxyHandler({
+                    'https': YANDEX_PROXY,
+                    'http': YANDEX_PROXY,
+                }))
+            response = opener.open(req, timeout=22)
+        else:
+            response = urllib.request.urlopen(req, timeout=22)
+        with response as resp:
             content = resp.read(3_000_000)
             return content.decode('utf-8', errors='replace')
     except urllib.error.HTTPError as exc:
@@ -83,40 +118,54 @@ def number(value):
     return n if 0 <= n < 10**12 else None
 
 
-def try_browser(url, evaluator=None):
-    """Best-effort real browser. Never asks for credentials or solves challenges."""
+def try_browser(url, evaluator=None, *, yandex=False, screenshot_path=None):
+    """Open a real Chromium page, optionally through a Yandex-specific proxy."""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
         raise Unavailable('Playwright не установлен в GitHub Actions')
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True, args=['--disable-dev-shm-usage'])
+            launch_args = {'headless': True, 'args': ['--disable-dev-shm-usage']}
+            if yandex and YANDEX_PROXY:
+                launch_args['proxy'] = yandex_proxy_config()
+            browser = p.chromium.launch(**launch_args)
             try:
                 context = browser.new_context(
-                    locale='en-US', user_agent=UA,
-                    viewport={'width': 1280, 'height': 900})
+                    locale='ru-RU' if yandex else 'en-US',
+                    user_agent=UA, viewport={'width': 1440, 'height': 1050})
                 page = context.new_page()
-                response = page.goto(url, wait_until='domcontentloaded', timeout=30000)
+                response = page.goto(url, wait_until='domcontentloaded', timeout=45000)
+                page.wait_for_timeout(3500)
+                if screenshot_path:
+                    Path(screenshot_path).parent.mkdir(parents=True, exist_ok=True)
+                    page.screenshot(path=screenshot_path, full_page=False)
                 if response and response.status == 451:
-                    raise Unavailable('HTTP 451: браузер тоже заблокирован по региону')
-                page.wait_for_timeout(2500)
-                result = None
+                    raise Unavailable('HTTP 451: браузер видит региональное ограничение')
+                result = {}
                 if evaluator:
                     try:
-                        result = page.evaluate(evaluator)
+                        result = page.evaluate(evaluator) or {}
                     except Exception:
                         pass
-                result = result or {}
                 result['html'] = page.content()[:3_000_000]
                 result['text'] = page.locator('body').inner_text(timeout=6000)[:150_000]
+                if screenshot_path and shutil.which('tesseract'):
+                    completed = subprocess.run(
+                        ['tesseract', screenshot_path, 'stdout', '-l', 'rus+eng',
+                         '--psm', '11'],
+                        capture_output=True, text=True, timeout=30)
+                    if completed.returncode == 0:
+                        result['ocr_text'] = completed.stdout[:25000]
                 return result
             finally:
                 browser.close()
     except Unavailable:
         raise
     except Exception as exc:
-        raise Unavailable('браузер: ' + str(exc)[:130]) from exc
+        # Proxy credentials are not printed to GitHub logs.
+        raise Unavailable('Chromium: не удалось открыть страницу: ' +
+                          type(exc).__name__) from exc
 
 
 def collect_telegram():
@@ -309,31 +358,6 @@ def yandex_embedded(page):
 
 
 
-def collect_lmusic():
-    """Independent non-Yandex monthly count; keep as separate source."""
-    url = 'https://lmusic.kz/artist/cold-carti'
-    content = fetch(url)
-    plain = re.sub(r'<[^>]+>', ' ', html.unescape(content))
-    plain = re.sub(r'\s+', ' ', plain)
-    # Match the exact artist and two known releases, not an unrelated namesake.
-    if not re.search(r'Cold\s+Carti', plain, re.I):
-        raise Unavailable('зеркало: имя артиста не найдено')
-    if not ('я не могу уснуть' in plain.lower() and 'падаем' in plain.lower()):
-        raise Unavailable('зеркало: релизы не совпали')
-    match = re.search(
-        r'([\d\s\u00a0\u202f.,]+)\s+слушател(?:ь|ей|я)\s+за\s+месяц',
-        plain, re.I)
-    n = number(match.group(1).strip()) if match else None
-    if not n or n <= 0:
-        raise Unavailable('зеркало: нет числа месячных слушателей')
-    return {
-        'listeners_monthly': n,
-        '_source': url,
-        '_source_note': 'Отдельная статистика lmusic.kz; не является подтверждённым числом слушателей Яндекс Музыки.',
-        '_quality': 'external_unverified',
-    }
-
-
 def collect_instagram_mirror():
     """Public third-party profile page, no account connection."""
     url = 'https://imginn.com/realcoldcarti/'
@@ -379,9 +403,16 @@ def collect_yandex():
     except Unavailable as e:
         errs.append('сайт: ' + str(e))
     try:
-        browser = try_browser(SOURCES['yandex'])
-        data = yandex_embedded(browser.get('html', '')) or find_monthly_in_text(
-            browser.get('text', ''))
+        browser = try_browser(SOURCES['yandex'], yandex=True, screenshot_path=DIAGNOSTICS)
+        dom_text = browser.get('text', '')
+        ocr_text = browser.get('ocr_text', '')
+        # A number is accepted only if the artist identity is present on the page.
+        has_artist = bool(re.search(r'Cold\\s+Carti', dom_text + ' ' + ocr_text, re.I))
+        data = (yandex_embedded(browser.get('html', '')) or
+                find_monthly_in_text(dom_text) or
+                (find_monthly_in_text(ocr_text) if has_artist else None))
+        if data and not has_artist:
+            data = None
         if data:
             return data
         if 'not available in your region' in browser.get('text', '').lower():
@@ -398,7 +429,6 @@ COLLECTORS = {
     'yandex': collect_yandex,
     'instagram': collect_instagram,
     'tiktok': collect_tiktok,
-    'lmusic': collect_lmusic,
 }
 
 
@@ -450,7 +480,7 @@ def main():
         encoding='utf-8')
     core_success = sum(statuses.get(k, {}).get('status') == 'ok'
                        for k in ('telegram', 'yandex', 'instagram', 'tiktok'))
-    external_success = int(statuses.get('lmusic', {}).get('status') == 'ok')
+    external_success = 0
     STATUS_FILE.write_text(
         json.dumps({
             'last_run': now.isoformat(),
@@ -459,8 +489,7 @@ def main():
             'sources': statuses}, ensure_ascii=False, indent=2) + '\n',
         encoding='utf-8')
     print(
-        f'Основные площадки: {core_success}/4; отдельный lmusic: '
-        f'{external_success}/1. История сохранена.', flush=True)
+        f'Основные площадки: {core_success}/4. История сохранена.', flush=True)
 
 
 if __name__ == '__main__':
