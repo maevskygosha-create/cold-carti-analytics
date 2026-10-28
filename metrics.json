@@ -6,17 +6,31 @@
       "followers": 20556,
       "status": "ok",
       "source": "https://t.me/coldcarti",
-      "collected_at": "2026-10-28T15:29:03.801605+00:00"
+      "source_note": "",
+      "quality": "public_platform",
+      "collected_at": "2026-10-28T15:36:43.250950+00:00"
     },
     {
       "date": "2026-10-28",
       "platform": "tiktok",
       "followers": 34800,
-      "likes": 404700,
+      "likes": 404800,
       "posts": 6,
       "status": "ok",
       "source": "https://www.tiktok.com/@coldcarti",
-      "collected_at": "2026-10-28T15:29:03.801605+00:00"
+      "source_note": "",
+      "quality": "public_platform",
+      "collected_at": "2026-10-28T15:36:43.250950+00:00"
+    },
+    {
+      "date": "2026-10-28",
+      "platform": "yandex",
+      "listeners_monthly": 17371,
+      "status": "ok",
+      "source": "https://lmusic.kz/artist/cold-carti",
+      "source_note": "Внешний каталог lmusic.kz. Метрика не подтверждена Яндекс Музыкой.",
+      "quality": "external_unverified",
+      "collected_at": "2026-10-28T15:36:43.250950+00:00"
     }
   ]
 }
