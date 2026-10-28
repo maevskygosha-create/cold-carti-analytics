@@ -128,7 +128,29 @@ document.getElementById('audienceMetric').addEventListener('change',render);
 document.getElementById('engagementMetric').addEventListener('change',render);
 document.getElementById('refresh').addEventListener('click',load);
 document.getElementById('csv').addEventListener('click',()=>{const keys=['date','platform','followers','listeners_monthly','likes','views','comments','shares','posts','status','source'];const csv='\ufeff'+[keys.join(';'),...snapshots.map(x=>keys.map(k=>String(x[k]??'').replaceAll(';',',')).join(';'))].join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='cold-carti-data.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
-async function loadStatus(){try{const r=await fetch('status.json?cache='+Date.now(),{cache:'no-store'});if(!r.ok)return;const data=await r.json();document.getElementById('source-status').textContent='Источники: '+Object.entries(data.sources||{}).map(([name,v])=>name+' — '+(v.status==='ok'?'✓':v.status==='disabled'?'отключён':'недоступен')).join(' · ');}catch(e){}}
+async function loadStatus(){
+  const slot=document.getElementById('source-status');
+  try{
+    const response=await fetch('status.json?cache='+Date.now(),{cache:'no-store'});
+    if(!response.ok)throw Error('HTTP '+response.status);
+    const data=await response.json();
+    const names={telegram:'Telegram',yandex:'Яндекс Музыка',instagram:'Instagram',tiktok:'TikTok',vk:'VK'};
+    const labels={
+      ok:'✓ Данные получены',disabled:'— Сбор отключён',unavailable:'! Нет доступа к данным'
+    };
+    const time=data.last_run?new Date(data.last_run).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+    slot.innerHTML='<div style="margin-bottom:8px;color:#d9b3c0">Последняя проверка: '+safe(time)+'</div>'+
+      Object.entries(data.sources||{}).map(([key,v])=>{
+        const detail=v.status==='unavailable'?
+          (key==='yandex'&&/451/.test(v.message||'')?'Региональное ограничение HTTP 451':
+          key==='instagram'&&/429|401/.test(v.message||'')?'Instagram ограничил автоматические запросы (429/401)':
+          (v.message||'Недоступно').slice(0,120)):'';
+        const status=labels[v.status]||v.status||'—';
+        const color=v.status==='ok'?'#75cfa0':v.status==='disabled'?'#a5a0a3':'#ec9aaf';
+        return '<span style="display:inline-block;vertical-align:top;margin:0 18px 8px 0"><b style="color:'+color+'">'+safe(names[key]||key)+': '+safe(status)+'</b>'+(detail?'<br><span style="color:#b2a7ac">'+safe(detail)+'</span>':'')+'</span>';
+      }).join('');
+  }catch(e){slot.textContent='Статус источников пока недоступен'}
+}
 const oldRefresh=document.getElementById('refresh').onclick;
 document.getElementById('refresh').addEventListener('click',loadStatus);
 load();loadStatus();setInterval(()=>{load();loadStatus()},30*60*1000);
