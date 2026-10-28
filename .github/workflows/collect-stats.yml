@@ -54,6 +54,7 @@ jobs:
             echo "active=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          echo "BlancVPN config detected; connecting WireGuard (secret hidden)"
           sudo apt-get install -y -qq wireguard-tools
           sudo install -m 600 /dev/null /etc/wireguard/coldcarti.conf
           printf '%s\n' "$BLANCVPN_WG_CONFIG" | sudo tee /etc/wireguard/coldcarti.conf >/dev/null
