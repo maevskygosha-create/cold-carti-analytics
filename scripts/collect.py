@@ -5,6 +5,7 @@ Collects Telegram/TikTok directly. Tries Instagram's public profile endpoint,
 public HTML, then browser rendering. Tries Yandex's artist API, public page,
 and browser rendering. Each collector fails independently, history is preserved.
 """
+import argparse
 import html
 import json
 import os
@@ -433,6 +434,13 @@ COLLECTORS = {
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Cold Carti daily public statistics')
+    parser.add_argument('--only', default='', help='Comma-separated platform keys to collect')
+    args = parser.parse_args()
+    selected = [p.strip() for p in args.only.split(',') if p.strip()] if args.only else list(COLLECTORS)
+    unknown = set(selected) - set(COLLECTORS)
+    if unknown:
+        parser.error('Unknown platforms: ' + ', '.join(sorted(unknown)))
     now = datetime.now(timezone.utc)
     today = now.date().isoformat()
     payload = (
@@ -441,9 +449,14 @@ def main():
     snapshots = payload.setdefault('snapshots', [])
     if not isinstance(snapshots, list):
         raise ValueError('Некорректный metrics.json')
-    statuses = {}
+    try:
+        prev = json.loads(STATUS_FILE.read_text(encoding='utf-8')) if STATUS_FILE.exists() else {}
+        statuses = prev.get('sources', {}) if isinstance(prev.get('sources', {}), dict) else {}
+    except (OSError, ValueError):
+        statuses = {}
     successful = 0
-    for platform, fn in COLLECTORS.items():
+    for platform in selected:
+        fn = COLLECTORS[platform]
         try:
             measurements = fn()
             if not measurements:
@@ -489,7 +502,7 @@ def main():
             'sources': statuses}, ensure_ascii=False, indent=2) + '\n',
         encoding='utf-8')
     print(
-        f'Основные площадки: {core_success}/4. История сохранена.', flush=True)
+        f'В этом проходе: {successful}/{len(selected)}; всего доступно: {core_success}/4. История сохранена.', flush=True)
 
 
 if __name__ == '__main__':
