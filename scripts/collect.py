@@ -212,6 +212,14 @@ def collect_instagram():
             errors.append('web_profile_info: нет данных аккаунта')
         except (Unavailable, ValueError) as e:
             errors.append('web_profile_info: ' + str(e))
+            if 'HTTP 429' in str(e):
+                # Respect the source's rate limit: do not fire more Instagram requests.
+                try:
+                    return collect_instagram_mirror()
+                except Unavailable as mirror_error:
+                    raise Unavailable(
+                        'Instagram HTTP 429: прямые запросы остановлены до следующего запуска; '
+                        'публичный просмотрщик: ' + str(mirror_error)) from e
     try:
         page = fetch(SOURCES['instagram'])
         parsed = instagram_meta(page)
@@ -440,14 +448,19 @@ def main():
     DATA_FILE.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
         encoding='utf-8')
+    core_success = sum(statuses.get(k, {}).get('status') == 'ok'
+                       for k in ('telegram', 'yandex', 'instagram', 'tiktok'))
+    external_success = int(statuses.get('lmusic', {}).get('status') == 'ok')
     STATUS_FILE.write_text(
         json.dumps({
-            'last_run': now.isoformat(), 'successful_sources': successful,
+            'last_run': now.isoformat(),
+            'successful_sources': core_success,
+            'external_sources': external_success,
             'sources': statuses}, ensure_ascii=False, indent=2) + '\n',
         encoding='utf-8')
     print(
-        f'Итого: {successful}/5 источников (включая отдельный lmusic), история сохранена.',
-        flush=True)
+        f'Основные площадки: {core_success}/4; отдельный lmusic: '
+        f'{external_success}/1. История сохранена.', flush=True)
 
 
 if __name__ == '__main__':
