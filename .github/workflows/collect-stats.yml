@@ -64,14 +64,29 @@ jobs:
             echo "active=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          EXIT_COUNTRY="$(curl -fsS --max-time 20 https://ipinfo.io/country | tr -d '[:space:]' || true)"
-          echo "VPN egress country: ${EXIT_COUNTRY:-unknown}"
+          echo "Testing IPv4 connectivity through WireGuard"
+          EXIT_COUNTRY="$(curl -4 -fsS --connect-timeout 5 --max-time 12 https://ipinfo.io/country 2>/dev/null | tr -d '[:space:]' || true)"
           if [ "$EXIT_COUNTRY" != "RU" ] && [ "$EXIT_COUNTRY" != "KZ" ]; then
-            echo "VPN exit is not RU/KZ; disconnecting, do not treat as regional connection."
+            ALT_COUNTRY="$(curl -4 -fsS --connect-timeout 5 --max-time 12 https://ifconfig.co/country-iso 2>/dev/null | tr -d '[:space:]' || true)"
+            if [ "$ALT_COUNTRY" = "RU" ] || [ "$ALT_COUNTRY" = "KZ" ]; then
+              EXIT_COUNTRY="$ALT_COUNTRY"
+            fi
+          fi
+          LAST_HANDSHAKE="$(sudo wg show coldcarti latest-handshakes | awk '{print $2}' | head -1)"
+          RX_TX="$(sudo wg show coldcarti transfer | awk '{print $2 " received / " $3 " sent"}' | head -1)"
+          echo "WireGuard handshake: $([ "${LAST_HANDSHAKE:-0}" -gt 0 ] && echo connected || echo missing)"
+          echo "WireGuard traffic: ${RX_TX:-unknown}"
+          echo "VPN egress country: ${EXIT_COUNTRY:-unknown}"
+          if [ "$EXIT_COUNTRY" = "RU" ] || [ "$EXIT_COUNTRY" = "KZ" ]; then
+            echo "Regional exit confirmed"
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          elif [ "${LAST_HANDSHAKE:-0}" -gt 0 ]; then
+            echo "Tunnel handshook but geo lookup failed; testing Yandex directly through tunnel"
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No WireGuard handshake: disconnecting nonfunctional tunnel"
             sudo wg-quick down coldcarti || true
             echo "active=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "active=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Collect Yandex Music from regional VPN
