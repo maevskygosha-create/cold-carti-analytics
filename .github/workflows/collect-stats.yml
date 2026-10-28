@@ -41,8 +41,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-rus
 
-      - name: Collect Telegram, Instagram and TikTok without VPN
-        run: python scripts/collect.py --only telegram,instagram,tiktok
+      - name: Collect Telegram and TikTok without VPN
+        run: python scripts/collect.py --only telegram,tiktok
 
       - name: Connect BlancVPN Kazakhstan WireGuard for Yandex
         id: blancvpn
