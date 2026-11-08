@@ -351,6 +351,38 @@
       "source_note": "",
       "quality": "public_platform",
       "collected_at": "2026-11-07T11:46:09.967398+00:00"
+    },
+    {
+      "date": "2026-11-08",
+      "platform": "telegram",
+      "followers": 20739,
+      "status": "ok",
+      "source": "https://t.me/coldcarti",
+      "source_note": "",
+      "quality": "public_platform",
+      "collected_at": "2026-11-08T11:58:09.371062+00:00"
+    },
+    {
+      "date": "2026-11-08",
+      "platform": "tiktok",
+      "followers": 35100,
+      "likes": 407400,
+      "posts": 6,
+      "status": "ok",
+      "source": "https://www.tiktok.com/@coldcarti",
+      "source_note": "",
+      "quality": "public_platform",
+      "collected_at": "2026-11-08T11:58:09.371062+00:00"
+    },
+    {
+      "date": "2026-11-08",
+      "platform": "yandex",
+      "listeners_monthly": 954105,
+      "status": "ok",
+      "source": "https://music.yandex.ru/artist/6487554",
+      "source_note": "",
+      "quality": "public_platform",
+      "collected_at": "2026-11-08T11:58:14.536305+00:00"
     }
   ]
 }
