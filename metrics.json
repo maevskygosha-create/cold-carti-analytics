@@ -639,6 +639,28 @@
       "source_note": "",
       "quality": "public_platform",
       "collected_at": "2026-11-16T13:43:00.030230+00:00"
+    },
+    {
+      "date": "2026-11-17",
+      "platform": "telegram",
+      "followers": 20792,
+      "status": "ok",
+      "source": "https://t.me/coldcarti",
+      "source_note": "",
+      "quality": "public_platform",
+      "collected_at": "2026-11-17T14:29:45.659576+00:00"
+    },
+    {
+      "date": "2026-11-17",
+      "platform": "tiktok",
+      "followers": 35200,
+      "likes": 408500,
+      "posts": 6,
+      "status": "ok",
+      "source": "https://www.tiktok.com/@coldcarti",
+      "source_note": "",
+      "quality": "public_platform",
+      "collected_at": "2026-11-17T14:29:45.659576+00:00"
     }
   ]
 }
